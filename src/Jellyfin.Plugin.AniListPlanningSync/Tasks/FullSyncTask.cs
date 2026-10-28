@@ -22,7 +22,7 @@ public class FullSyncTask : IScheduledTask
 
     public string Description => "Fetches the complete AniList Planning list of every opted-in user and marks matching library items as favourites.";
 
-    public string Category => "Planning Favourites for AniList";
+    public string Category => "Anime Planning Sync";
 
     public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         => _sync.SyncAllAsync(progress, cancellationToken);

@@ -21,7 +21,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
     public static Plugin? Instance { get; private set; }
 
-    public override string Name => "Planning Favourites for AniList";
+    public override string Name => "Anime Planning Sync";
 
     public override Guid Id => Guid.Parse(PluginGuid);
 

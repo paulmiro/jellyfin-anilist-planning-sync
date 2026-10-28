@@ -1,6 +1,6 @@
 # 100% Vibecoded Slop
 
-# Planning Favourites for AniList
+# Anime Planning Sync
 
 A Jellyfin (12.3+) plugin that reads a user's AniList **Planning** (plan-to-watch) list and marks every matching series or movie in the library as a **favourite**.
 
@@ -36,7 +36,7 @@ All AniList requests go through one queue. The plugin sends at most *Maximum req
 In Jellyfin, open *Dashboard → Plugins → Repositories* and add:
 
 ```
-https://raw.githubusercontent.com/paulmiro/jellyfin-anilist-planning-sync/main/manifest.json
+https://raw.githubusercontent.com/paulmiro/jellyfin-anime-planning-sync/main/manifest.json
 ```
 
 The plugin then shows up in the plugin catalogue.
@@ -71,4 +71,4 @@ After changing NuGet package references, regenerate `deps.json`:
 $(nix-build --no-out-link -E 'with import <nixpkgs> {}; (callPackage ./package.nix {}).passthru.fetch-deps') deps.json
 ```
 
-To install, copy `src/Jellyfin.Plugin.AniListPlanningSync/bin/Release/net10.0/Jellyfin.Plugin.AniListPlanningSync.dll` into a folder such as `<config>/plugins/PlanningFavourites_1.0.0.0/` and restart Jellyfin.
+To install, copy `src/Jellyfin.Plugin.AniListPlanningSync/bin/Release/net10.0/Jellyfin.Plugin.AniListPlanningSync.dll` into a folder such as `<config>/plugins/AnimePlanningSync_1.0.0.0/` and restart Jellyfin.

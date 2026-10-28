@@ -35,7 +35,7 @@ buildDotnetModule {
 
   meta = {
     description = "Jellyfin plugin that favourites anime from AniList Planning lists";
-    homepage = "https://github.com/paulmiro/jellyfin-anilist-planning-sync";
+    homepage = "https://github.com/paulmiro/jellyfin-anime-planning-sync";
     platforms = lib.platforms.all;
   };
 }

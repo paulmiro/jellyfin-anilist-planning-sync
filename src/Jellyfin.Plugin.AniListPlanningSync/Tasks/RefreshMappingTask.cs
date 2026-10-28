@@ -25,7 +25,7 @@ public class RefreshMappingTask : IScheduledTask
 
     public string Description => "Downloads the anime id mapping file (Fribb/anime-lists) used to match items that have no AniList id.";
 
-    public string Category => "Planning Favourites for AniList";
+    public string Category => "Anime Planning Sync";
 
     public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         => _configuration.Configuration.UseMappingFallback

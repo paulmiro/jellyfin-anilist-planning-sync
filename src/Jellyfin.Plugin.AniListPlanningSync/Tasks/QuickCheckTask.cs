@@ -28,7 +28,7 @@ public class QuickCheckTask : IScheduledTask
 
     public string Description => "Uses one request per user to detect new Planning entries and syncs only lists that changed.";
 
-    public string Category => "Planning Favourites for AniList";
+    public string Category => "Anime Planning Sync";
 
     public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         => _configuration.Configuration.QuickCheckEnabled

@@ -1,5 +1,5 @@
 {
-  description = "Planning Favourites for AniList - Jellyfin plugin";
+  description = "Anime Planning Sync - Jellyfin plugin";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 

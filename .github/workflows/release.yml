@@ -37,7 +37,7 @@ jobs:
             echo "version=$version"
             echo "tag=v$version"
             echo "target_abi=$target_abi"
-            echo "zip=planning-favourites-for-anilist_$version.zip"
+            echo "zip=anime-planning-sync_$version.zip"
           } >> "$GITHUB_OUTPUT"
 
       - name: Check that the version is new
