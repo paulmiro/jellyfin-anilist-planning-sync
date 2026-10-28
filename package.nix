@@ -9,13 +9,13 @@ let
   version = builtins.elemAt (builtins.match "(.*\n)?version: *\"([^\"]+)\".*" (builtins.readFile ./build.yaml)) 1;
 in
 buildDotnetModule {
-  pname = "jellyfin-plugin-anilist-planning-sync";
+  pname = "jellyfin-plugin-anime-planning-sync";
   inherit version;
 
   src = lib.fileset.toSource {
     root = ./.;
     fileset = lib.fileset.unions [
-      ./Jellyfin.Plugin.AniListPlanningSync.sln
+      ./Jellyfin.Plugin.AnimePlanningSync.sln
       ./build.yaml
       ./global.json
       ./src
@@ -23,8 +23,8 @@ buildDotnetModule {
     ];
   };
 
-  projectFile = "src/Jellyfin.Plugin.AniListPlanningSync/Jellyfin.Plugin.AniListPlanningSync.csproj";
-  testProjectFile = "tests/Jellyfin.Plugin.AniListPlanningSync.Tests/Jellyfin.Plugin.AniListPlanningSync.Tests.csproj";
+  projectFile = "src/Jellyfin.Plugin.AnimePlanningSync/Jellyfin.Plugin.AnimePlanningSync.csproj";
+  testProjectFile = "tests/Jellyfin.Plugin.AnimePlanningSync.Tests/Jellyfin.Plugin.AnimePlanningSync.Tests.csproj";
   doCheck = true;
 
   # Regenerate after changing package references, see README.

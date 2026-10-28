@@ -58,7 +58,7 @@ The workflow does the following:
 nix-shell -p dotnet-sdk_10 --run "dotnet test && dotnet build -c Release"
 ```
 
-Or with Nix, which runs the tests too. The output goes to `result/lib/jellyfin-plugin-anilist-planning-sync/`.
+Or with Nix, which runs the tests too. The output goes to `result/lib/jellyfin-plugin-anime-planning-sync/`.
 
 ```sh
 nix build                                                  # pinned nixpkgs from flake.lock
@@ -71,4 +71,4 @@ After changing NuGet package references, regenerate `deps.json`:
 $(nix-build --no-out-link -E 'with import <nixpkgs> {}; (callPackage ./package.nix {}).passthru.fetch-deps') deps.json
 ```
 
-To install, copy `src/Jellyfin.Plugin.AniListPlanningSync/bin/Release/net10.0/Jellyfin.Plugin.AniListPlanningSync.dll` into a folder such as `<config>/plugins/AnimePlanningSync_1.0.0.0/` and restart Jellyfin.
+To install, copy `src/Jellyfin.Plugin.AnimePlanningSync/bin/Release/net10.0/Jellyfin.Plugin.AnimePlanningSync.dll` into a folder such as `<config>/plugins/AnimePlanningSync_1.0.0.0/` and restart Jellyfin.

@@ -65,7 +65,7 @@ jobs:
         run: |
           timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           mkdir -p package
-          cp result/lib/jellyfin-plugin-anilist-planning-sync/Jellyfin.Plugin.AniListPlanningSync.dll package/
+          cp result/lib/jellyfin-plugin-anime-planning-sync/Jellyfin.Plugin.AnimePlanningSync.dll package/
           jq -n --arg version "$VERSION" --arg targetAbi "$TARGET_ABI" --arg timestamp "$timestamp" \
             '(input | .[0] | {guid, name, description, overview, owner, category})
              + {version: $version, targetAbi: $targetAbi, timestamp: $timestamp, changelog: "", status: "Active", autoUpdate: true, imagePath: "", assemblies: []}' \

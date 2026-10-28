@@ -1,7 +1,7 @@
 ---
 name: "Anime Planning Sync"
 guid: "e686a638-dbea-4f1c-b078-770c12631d50"
-version: "1.0.1.0"
+version: "1.0.2.0"
 targetAbi: "12.3.0.0"
 framework: "net10.0"
 owner: "paulmiro"
@@ -12,6 +12,6 @@ description: >
   login stored by the Ani-Sync plugin. Never removes favourites.
 category: "General"
 artifacts:
-  - "Jellyfin.Plugin.AniListPlanningSync.dll"
+  - "Jellyfin.Plugin.AnimePlanningSync.dll"
 changelog: >
   Initial release.
