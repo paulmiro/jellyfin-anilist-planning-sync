@@ -41,22 +41,28 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Check that the version is new
+        id: check
         env:
           TAG: ${{ steps.meta.outputs.tag }}
         run: |
           if gh release view "$TAG" > /dev/null 2>&1 || git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
-            echo "::error title=Version bump required::Release $TAG already exists. Every push to main publishes a release, so bump 'version' in build.yaml first."
-            exit 1
+            echo "::notice title=Release skipped::Release $TAG already exists. Bump 'version' in build.yaml to publish a new release."
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: cachix/install-nix-action@v31
+        if: steps.check.outputs.new == 'true'
         with:
           github_access_token: ${{ github.token }}
 
       - name: Build (includes tests)
+        if: steps.check.outputs.new == 'true'
         run: nix build .#default --print-build-logs
 
       - name: Package
+        if: steps.check.outputs.new == 'true'
         id: package
         env:
           VERSION: ${{ steps.meta.outputs.version }}
@@ -75,6 +81,7 @@ jobs:
           echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
 
       - name: Collect changes since last release
+        if: steps.check.outputs.new == 'true'
         run: |
           previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
           git log --no-merges --format='- %s' ${previous:+"$previous..HEAD"} \
@@ -83,6 +90,7 @@ jobs:
           cat changelog.md
 
       - name: Update manifest and push release commit
+        if: steps.check.outputs.new == 'true'
         id: commit
         env:
           VERSION: ${{ steps.meta.outputs.version }}
@@ -105,6 +113,7 @@ jobs:
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Create release
+        if: steps.check.outputs.new == 'true'
         env:
           TAG: ${{ steps.meta.outputs.tag }}
           ARCHIVE: ${{ steps.meta.outputs.zip }}

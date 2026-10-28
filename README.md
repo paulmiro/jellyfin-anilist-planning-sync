@@ -43,7 +43,7 @@ The plugin then shows up in the plugin catalogue.
 
 ## Releases
 
-Every push to `main` creates a release, using the `version` in `build.yaml`. That is the only place the version is set; the csproj and `package.nix` read it from there. If a release for that version already exists, the workflow fails, so **bump the version before merging**.
+Every push to `main` creates a release, using the `version` in `build.yaml`. That is the only place the version is set; the csproj and `package.nix` read it from there. If a release for that version already exists, the workflow skips the release and still succeeds, so **bump the version to publish a new release**.
 
 The workflow does the following:
 
