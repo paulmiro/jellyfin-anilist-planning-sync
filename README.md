@@ -1,3 +1,5 @@
+# 100% Vibecoded Slop
+
 # Planning Favourites for AniList
 
 A Jellyfin (12.3+) plugin that reads a user's AniList **Planning** (plan-to-watch) list and marks every matching series or movie in the library as a **favourite**.
