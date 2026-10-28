@@ -35,4 +35,16 @@ All AniList requests go through one queue. The plugin sends at most *Maximum req
 nix-shell -p dotnet-sdk_10 --run "dotnet test && dotnet build -c Release"
 ```
 
+Or with Nix (runs the tests too; output in `result/lib/jellyfin-plugin-anilist-planning-sync/`):
+
+```sh
+nix-build -E 'with import <nixpkgs> {}; callPackage ./package.nix {}'
+```
+
+After changing NuGet package references, regenerate `deps.json`:
+
+```sh
+$(nix-build --no-out-link -E 'with import <nixpkgs> {}; (callPackage ./package.nix {}).passthru.fetch-deps') deps.json
+```
+
 To install, copy `src/Jellyfin.Plugin.AniListPlanningSync/bin/Release/net10.0/Jellyfin.Plugin.AniListPlanningSync.dll` into a folder such as `<config>/plugins/PlanningFavourites_1.0.0.0/` and restart Jellyfin.
