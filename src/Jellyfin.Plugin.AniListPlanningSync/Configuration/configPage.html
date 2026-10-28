@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Planning Favourites for AniList</title>
+</head>
+<body>
+<div id="AniListPlanningSyncConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox,emby-radio">
+    <div data-role="content">
+        <div class="content-primary">
+            <h2 class="sectionTitle">Planning Favourites for AniList</h2>
+            <p>
+                Marks anime from a user's AniList <b>Planning</b> list as favourites in Jellyfin.
+                Syncing is opt-in per user. Favourites are never removed.
+            </p>
+
+            <form id="AniListPlanningSyncUserForm">
+                <h3 class="sectionTitle">User</h3>
+                <div class="selectContainer">
+                    <select is="emby-select" id="apsUser" label="Jellyfin user"></select>
+                </div>
+
+                <div id="apsUserSettings" class="hide">
+                    <div class="verticalSection">
+                        <h3 class="checkboxListLabel">AniList login</h3>
+                        <div class="checkboxList">
+                            <label class="radio-label-block">
+                                <input type="radio" is="emby-radio" name="apsSource" value="Off" />
+                                <span>Off (do not sync this user)</span>
+                            </label>
+                            <label class="radio-label-block">
+                                <input type="radio" is="emby-radio" name="apsSource" value="AniSync" />
+                                <span>Use the AniList login data of the Ani-Sync plugin</span>
+                            </label>
+                            <label class="radio-label-block">
+                                <input type="radio" is="emby-radio" name="apsSource" value="Username" />
+                                <span>Use a manually supplied AniList username (list must be public)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <input is="emby-input" type="text" id="apsUserName" label="AniList username" disabled />
+                    </div>
+                    <p id="apsMessage"></p>
+                    <button is="emby-button" type="submit" id="apsSave" class="raised button-submit block emby-button">
+                        <span>Save</span>
+                    </button>
+                </div>
+            </form>
+
+            <form id="AniListPlanningSyncGeneralForm">
+                <h3 class="sectionTitle">General</h3>
+                <div class="inputContainer">
+                    <input is="emby-input" type="number" id="apsMaxRequests" min="1" max="90" label="Maximum AniList requests per minute" />
+                    <div class="fieldDescription">AniList allows 90 per minute, currently reduced to 30. The lower of this value and AniList's reported limit is used.</div>
+                </div>
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="apsQuickCheck" />
+                        <span>Check for list changes every 10 minutes</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">One request per user. A full sync runs hourly regardless.</div>
+                </div>
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="apsMapping" />
+                        <span>Match items without an AniList id via AniDB/TVDB/TMDB ids</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">Uses the Fribb/anime-lists mapping file, downloaded once per day.</div>
+                </div>
+                <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                    <span>Save</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            const pluginId = 'e686a638-dbea-4f1c-b078-770c12631d50';
+            const page = document.querySelector('#AniListPlanningSyncConfigPage');
+            const userSelect = page.querySelector('#apsUser');
+            const userSettings = page.querySelector('#apsUserSettings');
+            const userNameInput = page.querySelector('#apsUserName');
+            const message = page.querySelector('#apsMessage');
+
+            function selectedSource() {
+                const checked = page.querySelector('input[name="apsSource"]:checked');
+                return checked ? checked.value : 'Off';
+            }
+
+            function updateUserNameState() {
+                userNameInput.disabled = selectedSource() !== 'Username';
+            }
+
+            function showMessage(text, isError) {
+                message.textContent = text || '';
+                message.style.color = isError ? '#e53935' : '';
+            }
+
+            function api(method, path, body) {
+                return fetch(ApiClient.getUrl(path), {
+                    method: method,
+                    headers: {
+                        'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"',
+                        'Content-Type': 'application/json'
+                    },
+                    body: body ? JSON.stringify(body) : undefined
+                });
+            }
+
+            function loadUser(userId) {
+                showMessage('');
+                if (!userId) {
+                    userSettings.classList.add('hide');
+                    return;
+                }
+
+                Dashboard.showLoadingMsg();
+                api('GET', 'AniListPlanningSync/Users/' + userId)
+                    .then(function (r) { return r.json(); })
+                    .then(function (settings) {
+                        page.querySelectorAll('input[name="apsSource"]').forEach(function (radio) {
+                            radio.checked = radio.value === settings.Source;
+                        });
+                        userNameInput.value = settings.AniListUserName || '';
+                        updateUserNameState();
+                        userSettings.classList.remove('hide');
+                    })
+                    .catch(function () { showMessage('Could not load settings for this user.', true); })
+                    .finally(function () { Dashboard.hideLoadingMsg(); });
+            }
+
+            page.querySelectorAll('input[name="apsSource"]').forEach(function (radio) {
+                radio.addEventListener('change', updateUserNameState);
+            });
+
+            userSelect.addEventListener('change', function () { loadUser(userSelect.value); });
+
+            page.querySelector('#AniListPlanningSyncUserForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const userId = userSelect.value;
+                if (!userId) {
+                    return false;
+                }
+
+                showMessage('Checking...');
+                Dashboard.showLoadingMsg();
+                api('POST', 'AniListPlanningSync/Users/' + userId, {
+                    Source: selectedSource(),
+                    AniListUserName: userNameInput.value
+                })
+                    .then(function (r) {
+                        return r.json().then(function (result) {
+                            showMessage(result.Message, !r.ok);
+                        });
+                    })
+                    .catch(function () { showMessage('Saving failed.', true); })
+                    .finally(function () { Dashboard.hideLoadingMsg(); });
+                return false;
+            });
+
+            page.querySelector('#AniListPlanningSyncGeneralForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    config.MaxRequestsPerMinute = parseInt(page.querySelector('#apsMaxRequests').value, 10) || 20;
+                    config.QuickCheckEnabled = page.querySelector('#apsQuickCheck').checked;
+                    config.UseMappingFallback = page.querySelector('#apsMapping').checked;
+                    ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                });
+                return false;
+            });
+
+            page.addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                Promise.all([ApiClient.getUsers(), ApiClient.getPluginConfiguration(pluginId)]).then(function (results) {
+                    const users = results[0];
+                    const config = results[1];
+
+                    userSelect.innerHTML = '<option value="">Select a user</option>' + users.map(function (u) {
+                        const option = document.createElement('option');
+                        option.value = u.Id;
+                        option.textContent = u.Name;
+                        return option.outerHTML;
+                    }).join('');
+                    userSettings.classList.add('hide');
+                    showMessage('');
+
+                    page.querySelector('#apsMaxRequests').value = config.MaxRequestsPerMinute;
+                    page.querySelector('#apsQuickCheck').checked = config.QuickCheckEnabled;
+                    page.querySelector('#apsMapping').checked = config.UseMappingFallback;
+                    Dashboard.hideLoadingMsg();
+                });
+            });
+        })();
+    </script>
+</div>
+</body>
+</html>

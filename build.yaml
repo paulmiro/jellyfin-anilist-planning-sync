@@ -1,0 +1,17 @@
+---
+name: "Planning Favourites for AniList"
+guid: "e686a638-dbea-4f1c-b078-770c12631d50"
+version: "1.0.0.0"
+targetAbi: "12.3.0.0"
+framework: "net10.0"
+owner: "paulmiro"
+overview: "Favourite anime from your AniList plan-to-watch list"
+description: >
+  Reads the AniList "Planning" list of opted-in users and marks every matching
+  series or movie in the Jellyfin library as a favourite. Can reuse the AniList
+  login stored by the Ani-Sync plugin. Never removes favourites.
+category: "General"
+artifacts:
+  - "Jellyfin.Plugin.AniListPlanningSync.dll"
+changelog: >
+  Initial release.
