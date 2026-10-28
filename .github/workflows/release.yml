@@ -1,0 +1,112 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+# Queue runs instead of releasing in parallel.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Pushes made with GITHUB_TOKEN never trigger workflows; this guards against the release commit anyway.
+    if: ${{ !(github.actor == 'github-actions[bot]' && startsWith(github.event.head_commit.message, 'release version ')) }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: meta
+        run: |
+          version=$(sed -nE 's/^version:[[:space:]]*"([^"]+)".*/\1/p' build.yaml)
+          target_abi=$(sed -nE 's/^targetAbi:[[:space:]]*"([^"]+)".*/\1/p' build.yaml)
+          if [ -z "$version" ] || [ -z "$target_abi" ]; then
+            echo "::error::Could not read version/targetAbi from build.yaml"
+            exit 1
+          fi
+          {
+            echo "version=$version"
+            echo "tag=v$version"
+            echo "target_abi=$target_abi"
+            echo "zip=planning-favourites-for-anilist_$version.zip"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check that the version is new
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1 || git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
+            echo "::error title=Version bump required::Release $TAG already exists. Every push to main publishes a release, so bump 'version' in build.yaml first."
+            exit 1
+          fi
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ github.token }}
+
+      - name: Build (includes tests)
+        run: nix build .#default --print-build-logs
+
+      - name: Package
+        id: package
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          TARGET_ABI: ${{ steps.meta.outputs.target_abi }}
+          ARCHIVE: ${{ steps.meta.outputs.zip }}
+        run: |
+          timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          mkdir -p package
+          cp result/lib/jellyfin-plugin-anilist-planning-sync/Jellyfin.Plugin.AniListPlanningSync.dll package/
+          jq -n --arg version "$VERSION" --arg targetAbi "$TARGET_ABI" --arg timestamp "$timestamp" \
+            '(input | .[0] | {guid, name, description, overview, owner, category})
+             + {version: $version, targetAbi: $targetAbi, timestamp: $timestamp, changelog: "", status: "Active", autoUpdate: true, imagePath: "", assemblies: []}' \
+            manifest.json > package/meta.json
+          zip -j "$ARCHIVE" package/*
+          echo "checksum=$(md5sum "$ARCHIVE" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
+
+      - name: Collect changes since last release
+        run: |
+          previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          git log --no-merges --format='- %s' ${previous:+"$previous..HEAD"} \
+            | grep -v '^- release version ' > changelog.md || true
+          [ -s changelog.md ] || echo "- No changes" > changelog.md
+          cat changelog.md
+
+      - name: Update manifest and push release commit
+        id: commit
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          TARGET_ABI: ${{ steps.meta.outputs.target_abi }}
+          SOURCE_URL: https://github.com/${{ github.repository }}/releases/download/${{ steps.meta.outputs.tag }}/${{ steps.meta.outputs.zip }}
+          CHECKSUM: ${{ steps.package.outputs.checksum }}
+          TIMESTAMP: ${{ steps.package.outputs.timestamp }}
+        run: |
+          jq --arg version "$VERSION" --arg targetAbi "$TARGET_ABI" --arg sourceUrl "$SOURCE_URL" \
+             --arg checksum "$CHECKSUM" --arg timestamp "$TIMESTAMP" --rawfile changelog changelog.md \
+            '.[0].versions = [{version: $version, changelog: $changelog, targetAbi: $targetAbi,
+                               sourceUrl: $sourceUrl, checksum: $checksum, timestamp: $timestamp}] + .[0].versions' \
+            manifest.json > manifest.json.tmp
+          mv manifest.json.tmp manifest.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "release version $VERSION"
+          git push origin HEAD:refs/heads/main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          ARCHIVE: ${{ steps.meta.outputs.zip }}
+          SHA: ${{ steps.commit.outputs.sha }}
+        run: gh release create "$TAG" "$ARCHIVE" --target "$SHA" --title "$TAG" --notes-file changelog.md
