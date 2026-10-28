@@ -4,14 +4,19 @@
   dotnetCorePackages,
 }:
 
+let
+  # build.yaml is the single source of truth for the version.
+  version = builtins.elemAt (builtins.match "(.*\n)?version: *\"([^\"]+)\".*" (builtins.readFile ./build.yaml)) 1;
+in
 buildDotnetModule {
   pname = "jellyfin-plugin-anilist-planning-sync";
-  version = "1.0.0.0";
+  inherit version;
 
   src = lib.fileset.toSource {
     root = ./.;
     fileset = lib.fileset.unions [
       ./Jellyfin.Plugin.AniListPlanningSync.sln
+      ./build.yaml
       ./global.json
       ./src
       ./tests

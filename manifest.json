@@ -1,0 +1,11 @@
+[
+  {
+    "guid": "e686a638-dbea-4f1c-b078-770c12631d50",
+    "name": "Planning Favourites for AniList",
+    "description": "Reads the AniList \"Planning\" list of opted-in users and marks every matching series or movie in the Jellyfin library as a favourite. Can reuse the AniList login stored by the Ani-Sync plugin. Never removes favourites.",
+    "overview": "Favourite anime from your AniList plan-to-watch list",
+    "owner": "paulmiro",
+    "category": "General",
+    "versions": []
+  }
+]

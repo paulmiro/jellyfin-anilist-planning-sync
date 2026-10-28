@@ -29,16 +29,38 @@ When series or movies are added to the library, they are matched against the cac
 
 All AniList requests go through one queue. The plugin sends at most *Maximum requests per minute* requests, 20 by default. If AniList reports a lower limit in `X-RateLimit-Limit`, that limit is used instead (it is currently 30). The plugin also honours `X-RateLimit-Remaining`, and on a 429 response it waits for `Retry-After` / `X-RateLimit-Reset`.
 
+## Installation
+
+In Jellyfin, open *Dashboard → Plugins → Repositories* and add:
+
+```
+https://raw.githubusercontent.com/paulmiro/jellyfin-anilist-planning-sync/main/manifest.json
+```
+
+The plugin then shows up in the plugin catalogue.
+
+## Releases
+
+Every push to `main` creates a release, using the `version` in `build.yaml`. That is the only place the version is set; the csproj and `package.nix` read it from there. If a release for that version already exists, the workflow fails, so **bump the version before merging**.
+
+The workflow does the following:
+
+1. Builds the plugin with Nix, which runs the tests.
+2. Adds the version to `manifest.json` in a `release version X` commit.
+3. Tags that commit `vX`.
+4. Publishes a GitHub release. It attaches the plugin zip and lists the commits made since the previous release.
+
 ## Build
 
 ```sh
 nix-shell -p dotnet-sdk_10 --run "dotnet test && dotnet build -c Release"
 ```
 
-Or with Nix (runs the tests too; output in `result/lib/jellyfin-plugin-anilist-planning-sync/`):
+Or with Nix, which runs the tests too. The output goes to `result/lib/jellyfin-plugin-anilist-planning-sync/`.
 
 ```sh
-nix-build -E 'with import <nixpkgs> {}; callPackage ./package.nix {}'
+nix build                                                  # pinned nixpkgs from flake.lock
+nix-build -E 'with import <nixpkgs> {}; callPackage ./package.nix {}'   # your nixpkgs
 ```
 
 After changing NuGet package references, regenerate `deps.json`:
